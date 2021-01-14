@@ -8,9 +8,21 @@ Checkout this [documents](https://github.com/beagleboard/image-builder/blob/mast
     todo
 
 # 一.说明
-1.当前文件是野火由img-builder项目中移植而来，用于编译arm soc的debian或者ubuntu的根文件系统
-2.在当前的编译系统当中主要使用了qemu 和debootstrap工具进行制作的，相关的配置图片如下：
-3.整体流程就是a.下载相关的固件 b.下载debian相关的文件 c.使用debootstrap进行根文件系统的制作 d.将根文件系统进行挂载(这里需要qemu的虚拟出的arm环境) e.读挂载的文件夹进行相关软件的安装
+1. 当前文件是野火由img-builder项目中移植而来，用于编译arm soc的debian或者ubuntu的根文件系统
+2. 在当前的编译系统当中主要使用了qemu 和debootstrap工具进行制作的，相关的配置图片如下：
+ ![image-builder的构成](https://github.com/mailonghua/ebf-image-builder/blob/master/PIC/image-builder_analyze.png)
+3. image-builder的文件构成:
+
+  ![文件构成说明](https://github.com/mailonghua/ebf-image-builder/blob/master/PIC/ebf-image-builder_list.png)
+configs目录:主要是Debian文件系统的一些配置项，主要有:预安装软件列表、镜像源地址等。
+docs目录:主要是代理使用说明和debootstrap使用说明。
+publish目录:这个目录下存放着编译debian固件的起始脚本，是整个项目的编译入口。
+scripts目录:存放了一些执行特殊功能的脚本，在编译过程中会被调用。
+target目录:这里面放置的内容比较杂散，有启动参数的说明文档、systemd的启动服务和deb镜像源的密钥等等。
+tools目录:主要是打包脚本，完成把文件系统和uboot打包成img镜像的功能。
+Kernel目录:存放的是前面编译出来的内核安装包(linux-image-4.19.71-imx-r1_1stable_armhf.deb)。
+uboot目录:存放前面编译出来的uboot固件(u-boot-dtb.imx)。
+4. 整体流程就是a.下载相关的固件 b.下载debian相关的文件 c.使用debootstrap进行根文件系统的制作 d.将根文件系统进行挂载(这里需要qemu的虚拟出的arm环境) e.读挂载的文件夹进行相关软件的安装
 
 
 # 二.野火移植过来后进行修改的内容总结

@@ -390,7 +390,7 @@ sfdisk_partition_layout () {
 
 	sync
 }
-
+#sfdisk为硬盘分区的工具程序
 sfdisk_single_partition_layout () {
 	sfdisk_options="--force --in-order --Linux --unit M"
 	sfdisk_boot_startmb="${conf_boot_startmb}"
@@ -409,13 +409,19 @@ sfdisk_single_partition_layout () {
 			sfdisk_rootfs_startmb="${sfdisk_rootfs_startmb}M"
 		fi
 	fi
-
+	#条件满足，执行该处
 	if [ "x${option_ro_root}" = "xenable" ] ; then
 		echo "sfdisk: [$(LC_ALL=C sfdisk --version)]"
 		echo "sfdisk: [${sfdisk_options} ${media}]"
 		echo "sfdisk: [${sfdisk_boot_startmb},${sfdisk_var_size_mb},${sfdisk_fstype},*]"
 		echo "sfdisk: [${sfdisk_rootfs_startmb},,,-]"
-
+		 #该条语句先进行赋值，将LC_ALL=C                                                   
+		 #然后再执行sfdisk对磁盘进行分区，这里的磁盘就是之前用dd生成的img                  
+		 #sfdisk --f ${media} 表示要分区的设备                                             
+		 #第二行，表示第一个的分区，从${sfdisk_boot_startmb}开始，${sfdisk_var_size_mb}多大
+		 #第三行，表示第二个的分区，接着上一个分区剩下的作为第二个分区                     
+		 #重要：创建分区的含义：就是将创建的分区信息写到整个磁盘的前512BYTE上，这512BYTE以16进制0x55和0XAA作为结束符
+		 #分区的构成，说白了就是将这分区的信息写到前512BYTE中
 		LC_ALL=C sfdisk ${sfdisk_options} "${media}" <<-__EOF__
 			${sfdisk_boot_startmb},${sfdisk_var_size_mb},${sfdisk_fstype},*
 			${sfdisk_rootfs_startmb},,,-
@@ -586,7 +592,7 @@ format_rootfs_partition () {
 		rootfs_var_drive="${conf_root_device}p${media_rootfs_var_partition}"
 	fi
 }
-
+#1.先使用DD指令将ubootcopy到img中  2.再从sfdisk工具进行分区
 create_partitions () {
 	unset bootloader_installed
 	unset sfdisk_gpt
@@ -628,6 +634,7 @@ create_partitions () {
 		echo "-----------------------------"
 		sfdisk_partition_layout
 		;;
+	#执行该处，主要执行两个方面1.将uboot dd到xxx.img中   2.将img进行分区，主要分两个区4MB~44MB和44MB~END
 	dd_uboot_boot)
 		echo "Using dd to place bootloader on drive"
 		echo "-----------------------------"
@@ -695,7 +702,7 @@ create_partitions () {
 		sfdisk_partition_layout
 		;;
 	esac
-
+#上面执行完分区的创建执行这里
 	echo "Partition Setup:"
 	echo "-----------------------------"
 	LC_ALL=C fdisk -l "${media}"
@@ -1777,6 +1784,9 @@ fi
 if [ ! "x${build_img_file}" = "xenable" ] ; then
 	unmount_all_drive_partitions
 fi
+#使用dd将uboot copy到输出img当中，然后再用sfdisk进行分区，分成两个区
+#这里是先使用dd进行uboot的拷贝，而分区是是从4MB~44MB作为第一个分区，45MB~end作为第二个分区
+#因此，这里理解的是用dd将将uboot放置到0~4MB空间上
 create_partitions
 populate_boot
 populate_rootfs

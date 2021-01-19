@@ -550,7 +550,7 @@ format_partition () {
 	LC_ALL=C ${mkfs} ${mkfs_options} ${mkfs_partition} ${mkfs_label} || format_partition_try2
 	sync
 }
-
+#格式化boot分区---fat16文件系统
 format_boot_partition () {
 	mkfs_partition="${media_prefix}${media_boot_partition}"
 
@@ -568,7 +568,7 @@ format_boot_partition () {
 
 	boot_drive="${conf_root_device}p${media_boot_partition}"
 }
-
+#格式化rootfs分区---ext4文件系统
 format_rootfs_partition () {
 	if [ "x${option_ro_root}" = "xenable" ] ; then
 		mkfs="mkfs.ext2"
@@ -714,7 +714,7 @@ create_partitions () {
 	echo "-----------------------------"
 	LC_ALL=C fdisk -l "${media}"
 	echo "-----------------------------"
-
+	#条件成立
 	if [ "x${build_img_file}" = "xenable" ] ; then
 		media_loop=$(losetup -f || true)
 		if [ ! "${media_loop}" ] ; then
@@ -726,13 +726,20 @@ create_partitions () {
 			echo "-----------------------------"
 			exit
 		fi
-
+		#losetup :设置循环设备，循环设备额可以把文件虚拟成区快设备，让用户得以将其视为            
+		#硬盘驱动器、一个硬盘设备                                                                 
+		#将${media}设备挂到loop device中的media_loop                                              
+		#若是当前img只有一个分区，那么可以直接将该loop_device进行mount挂载，就可以像访问文件夹一样
+		#而由于当前有两个分区，因此需要使用kpartx命令将分区装载到映像文件中                       
 		losetup ${media_loop} "${media}"
+		#将两个分区分别装载到/dev/mapper/loopxp1和loopxp2
+		#其中1和2是代表分区号,代表分区1和分区2           
 		kpartx -av ${media_loop}
 		sleep 1
 		sync
-		test_loop=$(echo ${media_loop} | awk -F'/' '{print $3}')
+		test_loop=$(echo ${media_loop} | awk -F'/' '{print $3}')  
 		if [ -e /dev/mapper/${test_loop}p${media_boot_partition} ] && [ -e /dev/mapper/${test_loop}p${media_rootfs_partition} ] ; then
+			#检查装载的两个分区是否存在
 			media_prefix="/dev/mapper/${test_loop}p"
 		else
 			ls -lh /dev/mapper/
@@ -742,12 +749,16 @@ create_partitions () {
 	else
 		partprobe ${media}
 	fi
-
-	if [ "x${media_boot_partition}" = "x${media_rootfs_partition}" ] ; then
+	
+	if [ "x${media_boot_partition}" = "x${media_rootfs_partition}" ] ; then 
+		#处理只有一分区的情况
 		mount_partition_format="${ROOTFS_TYPE}"
 		format_rootfs_partition
 	else
-		format_boot_partition
+	#处因为当前有两个分区，因此走该处
+		#调用mkfs.vfat对分区1,也就是boot分区进行格式化, [mkfs.vfat -F 16  /dev/mapper/loop20p1 -n BOOT],-n参数表示设置该分区的名称为BOOT
+		format_boot_partition 
+		#调用mkfs.ext4对分区1,也就是rootfs分区进行格式化，[mkfs.ext4  /dev/mapper/loop20p2 -L rootfs]，-L参数表示设置分区的名称为rootfs 
 		format_rootfs_partition
 	fi
 }

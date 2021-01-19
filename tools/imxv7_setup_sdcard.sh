@@ -592,7 +592,14 @@ format_rootfs_partition () {
 		rootfs_var_drive="${conf_root_device}p${media_rootfs_var_partition}"
 	fi
 }
-#1.先使用DD指令将ubootcopy到img中  2.再从sfdisk工具进行分区
+#1.将uboot写入img从1024byte开始写，u-boot-drb.imx为839K，所以写入的范围在1K～849K区间              
+#2.对img进行分区，理解img分区实际的操作---就是将分区的个数、大小、类型、地址范围等信息存放在img的开
+始的512byte处，分区信息以0x55 0xaa为结束符                                                         
+#分区1：4MB~44mb  FAT16文件系统格式                                                                
+#分区2：45MB～END ，LINUX文件系统格式                                                              
+#3.总结函数执行完毕后img的布局为:0~512byte分区表信息  1K~849K存储的是uboot信息                     
+#                              4MB~44MB,当前数据为空，但是其是分区1的空间(定义信息在head中)      
+#                              45MB~end,当前数据为空，但是其是分区2的空间(定义信息在head中)      
 create_partitions () {
 	unset bootloader_installed
 	unset sfdisk_gpt

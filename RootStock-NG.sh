@@ -159,7 +159,9 @@ run_roostock_ng () {
 	/bin/bash -e "${OIB_DIR}/scripts/chroot.sh" || { exit 1 ; }
 	sudo rm -rf ${tempdir}/ || true
 }
-
+#下载linux 固件
+#linux固件简单的理解为就是一群二进制文件，这些二进制文件会由kernel提供的接口写到对应的固件程序中
+#与linux系统无关，只是某外设内部运行的程序
 git_trees
 
 cd ${DIR}/

@@ -1047,7 +1047,7 @@ populate_rootfs () {
 	fi
 
 	mkdir ${TEMPDIR}/disk/home/debian/.resizerootfs
-
+	#创建uEnv.txt文件，该文件主要是配置uboot的启动参数，预设的额外环境参数
 	wfile="${TEMPDIR}/disk/boot/uEnv.txt"
 	echo "#Docs: http://elinux.org/Beagleboard:U-boot_partitioning_layout_2.0" > ${wfile}
 	echo "" >> ${wfile}

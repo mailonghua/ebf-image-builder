@@ -1,8 +1,13 @@
 # 移植新的SOC需要配置文件
-## 1.根文件系统制作的
+## 0.kernel和uboot的文件copy
+ 将编译好的uboot文件放置到image-builder/uboot下
+ 将编号的kernel文件放到image-builder/Kernel/下
+## 1.根文件系统制作的<添加debootstrap的参数文件>
 1. debootstrap 的输入参数
+
 debootstrap工具是用来制作根文件系统的工具
 如在野火的imu6x中执行的指令(从log中查看)
+scripts/debootstrap.sh：
 ```shell
 sudo debootstrap --no-merged-usr #表示不创建根文件系统下/{bin,sbin,lib}到usr的软连接
                  --arch=armhf     #设置当前的硬件的特性是硬件浮点还是armel，软件浮点(较老的soc)
@@ -30,10 +35,33 @@ Debian 的版本，你可以使用目前的穩定版本 wheezy ，或是 永遠�
 下載 Debian 套件的伺服器，通常選擇該使用者區域內的服務器，当前选用的是清华大学的服务器 http://mirrors.tuna.tsinghua.edu.cn/debian/
 
 2. debootstrap的配置文件
-    在image-builder/configs/xxx.conf下，如野火开发板的配置，根据soc进行修改调整seeed-imx-debian-buster-console-v4.19.conf
+    在image-builder/configs/xxx.conf下，如野火开发板的配置，根据soc进行修改调整seeed-imx-debian-buster-console-v4.19.conf  
 3.当前需编译需要使用的debootstrap配置文件
     配置文件的指定，在seeed-imx-stable.sh文件中在执行build_and_upload_image函数前,如下
    ```shell
     config_name="seeed-imx-debian-buster-console-v4.19"
     build_and_upload_image  #调用脚本RootStock-NG.sh脚本继续进行处理
-    ```
+    ```    
+        
+## 2.内核的安装--修改安装的文件名称 <修改kernle的名称>
+文件路径script/chroot.sh中
+a.kernel的安装 L719行,如下
+```shell
+ install_pkgs () {                                                    
+                                                                      
+     if [ -f "/linux-image-4.19.71-imx-r1_1stable_armhf.deb" ] ; then 
+         dpkg -i "/linux-image-4.19.71-imx-r1_1stable_armhf.deb"      
+         rm -f /linux-image-4.19.71-imx-r1_1stable_armhf.deb          
+     fi                                                              
+```  
+b.  LINE:1245 sudo cp "${OIB_DIR}/Kernel/linux-image-4.19.71-imx-r1_1stable_armhf.deb" "${tempdir}/linux-image-4.19.71-imx-r1_1stable_armhf.deb"                                           
+其中linux-image-4.19.71-imx-r1_1stable_armhf.deb，安装的包名，就是在Kernel文件夹下存储的kernel文件名称为linux-image-4.19.71-imx-r1_1stable_armhf.deb
+若是想要替换kernel文件需要对应修改这里.
+说明：(1)中脚本是在我们要制作的根文件系统里执行的
+        如何在我们制作的根文件系统中执行这个脚本呢？先通过chroot_mount函数，将根文件系统中的/proc   /dev/pts 进行挂载，挂载成虚拟文件系统proc和devpts形式
+        然后执行sudo chroot "${tempdir}" /bin/bash -e chroot_script.sh 通过chroot切换根文件路径，然后执行脚本chroot_script
+        这样就能在我们制作的根文件系统里进行软件的安装了
+        可以参考[debootstrip](https://github.com/KingBing/blog-src/blob/master/%E4%BD%BF%E7%94%A8%20debootstrap%20%E5%BB%BA%E7%AB%8B%E5%AE%8C%E6%95%B4%E7%9A%84%20Debian%20%E7%B3%BB%E7%B5%B1.org)
+
+
+

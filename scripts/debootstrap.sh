@@ -129,6 +129,7 @@ fi
 echo "Log: Running: debootstrap in [${tempdir}]"
 ###FIXME: --no-merged-usr eventually we will support, but as of 1.0.101+ it's back, so default to pre...
 echo "Log: [sudo debootstrap --no-merged-usr ${options} ${suite} ${target} ${mirror}]"
+#利用debootstrap指令制作根文件系统,制作的存在target路径中
 sudo debootstrap --no-merged-usr ${options} ${suite} "${target}" ${mirror}
 report_size
 #
